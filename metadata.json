@@ -1,5 +1,5 @@
 {
-  "name": "Copy of Ibovespa Cointegration Master",
+  "name": "Ibovespa Cointegration Master",
   "description": "A specialized tool for quantitative analysis of Brazilian stocks (IBOV), focusing on cointegration pairs trading. Features automated market scanning and manual pair analysis with advanced statistical metrics.",
   "requestFramePermissions": []
 }
