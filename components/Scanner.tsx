@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { scanMarketForPairs, analyzeSpecificPair } from '../services/geminiService';
 import { ScannedPair, DetailedAnalysis } from '../types';
 import { PERIODS } from '../constants';
-import { Search, TrendingUp, AlertTriangle, ArrowRight, Activity, Globe, ExternalLink } from 'lucide-react';
+import { Search, TrendingUp, AlertTriangle, ArrowRight, Activity, Globe, ExternalLink, XCircle } from 'lucide-react';
 
 interface ScannerProps {
   onSelectPair: (analysis: DetailedAnalysis) => void;
@@ -12,16 +12,24 @@ const Scanner: React.FC<ScannerProps> = ({ onSelectPair }) => {
   const [period, setPeriod] = useState(PERIODS[2]); // Default 6 Months
   const [pairs, setPairs] = useState<ScannedPair[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
 
   const handleScan = async () => {
     setLoading(true);
+    setError(null);
     setPairs([]);
+    
     try {
       const results = await scanMarketForPairs(period);
-      setPairs(results);
-    } catch (e) {
+      if (results.length === 0) {
+        setError("O scanner não encontrou pares compatíveis neste momento. Tente novamente em instantes.");
+      } else {
+        setPairs(results);
+      }
+    } catch (e: any) {
       console.error(e);
+      setError(e.message || "Ocorreu um erro desconhecido ao escanear o mercado.");
     } finally {
       setLoading(false);
     }
@@ -29,11 +37,12 @@ const Scanner: React.FC<ScannerProps> = ({ onSelectPair }) => {
 
   const handleAnalyzeClick = async (pair: ScannedPair) => {
     setAnalyzingId(pair.id);
+    setError(null);
     try {
       const detailedData = await analyzeSpecificPair(pair.assetY, pair.assetX, period);
       onSelectPair(detailedData);
-    } catch (e) {
-      alert("Erro ao analisar par. Tente novamente.");
+    } catch (e: any) {
+      setError(e.message || "Erro ao analisar par. Tente novamente.");
     } finally {
       setAnalyzingId(null);
     }
@@ -47,6 +56,13 @@ const Scanner: React.FC<ScannerProps> = ({ onSelectPair }) => {
           Scanner de Cointegração
         </h2>
         
+        {error && (
+          <div className="mb-4 bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-red-200 text-sm flex gap-2 items-start">
+            <XCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <p>{error}</p>
+          </div>
+        )}
+
         <div className="flex flex-col md:flex-row gap-4 items-end">
           <div className="w-full md:w-1/3">
             <label className="block text-sm font-medium text-slate-400 mb-1">Período de Análise</label>
@@ -157,10 +173,10 @@ const Scanner: React.FC<ScannerProps> = ({ onSelectPair }) => {
           </div>
         ))}
 
-        {!loading && pairs.length === 0 && (
+        {!loading && !error && pairs.length === 0 && (
           <div className="col-span-full text-center py-12 text-slate-500 border border-dashed border-slate-700 rounded-xl">
             <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            Nenhum par encontrado. Tente buscar novamente.
+            Clique em "Buscar Pares" para iniciar o scanner.
           </div>
         )}
       </div>

@@ -2,16 +2,24 @@ import { GoogleGenAI } from "@google/genai";
 import { DetailedAnalysis, ScannedPair, Source } from "../types";
 
 // Initialize Gemini Client
-// IMPORTANT: In Vite/Vercel, we use import.meta.env.VITE_API_KEY
 const apiKey = import.meta.env.VITE_API_KEY;
 
-if (!apiKey) {
-  console.error("API KEY is missing. Please set VITE_API_KEY in your environment variables.");
+// Instância lazy ou condicional para evitar crash na inicialização se a key for inválida
+let ai: GoogleGenAI | null = null;
+
+if (apiKey) {
+  ai = new GoogleGenAI({ apiKey: apiKey });
+} else {
+  console.warn("VITE_API_KEY não definida. As requisições falharão.");
 }
 
-const ai = new GoogleGenAI({ apiKey: apiKey || '' });
-
 const modelName = "gemini-2.5-flash";
+
+const checkApiKey = () => {
+  if (!apiKey || !ai) {
+    throw new Error("API Key não configurada. Verifique as 'Environment Variables' na Vercel (VITE_API_KEY).");
+  }
+};
 
 /**
  * Helper to extract JSON from a potentially Markdown-formatted response.
@@ -56,9 +64,9 @@ const extractSources = (response: any): Source[] => {
  * Scans the market using Google Search to find real-time cointegration opportunities.
  */
 export const scanMarketForPairs = async (period: string): Promise<ScannedPair[]> => {
+  checkApiKey();
   const today = new Date().toLocaleDateString('pt-BR');
   
-  // Prompt otimizado: Pede para buscar DADOS DE MERCADO especificamente no Yahoo Finance e Investing.com
   const prompt = `
     Hoje é ${today}. Você é um sistema especialista em Long & Short.
     
@@ -89,6 +97,8 @@ export const scanMarketForPairs = async (period: string): Promise<ScannedPair[]>
   `;
 
   try {
+    if (!ai) throw new Error("Cliente AI não inicializado");
+
     const response = await ai.models.generateContent({
       model: modelName,
       contents: prompt,
@@ -104,7 +114,8 @@ export const scanMarketForPairs = async (period: string): Promise<ScannedPair[]>
 
     if (!Array.isArray(data)) {
       console.warn("Invalid data format received from Gemini:", text);
-      return [];
+      // Se não for array, pode ser um erro do modelo, vamos lançar para o UI saber
+      throw new Error("O modelo não retornou dados estruturados. Tente novamente.");
     }
 
     return data.map((item: any, index: number) => ({
@@ -113,9 +124,10 @@ export const scanMarketForPairs = async (period: string): Promise<ScannedPair[]>
       sources: sources
     }));
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error scanning market:", error);
-    return [];
+    // Propaga o erro para ser exibido no UI
+    throw new Error(error.message || "Erro ao conectar com Gemini API");
   }
 };
 
@@ -123,6 +135,7 @@ export const scanMarketForPairs = async (period: string): Promise<ScannedPair[]>
  * Generates detailed analysis for a pair using Search to get the latest context.
  */
 export const analyzeSpecificPair = async (assetY: string, assetX: string, period: string): Promise<DetailedAnalysis> => {
+  checkApiKey();
   const today = new Date().toLocaleDateString('pt-BR');
 
   const prompt = `
@@ -148,6 +161,8 @@ export const analyzeSpecificPair = async (assetY: string, assetX: string, period
   `;
 
   try {
+    if (!ai) throw new Error("Cliente AI não inicializado");
+
     const response = await ai.models.generateContent({
       model: modelName,
       contents: prompt,
@@ -161,10 +176,8 @@ export const analyzeSpecificPair = async (assetY: string, assetX: string, period
     const data = extractJSON(text);
     const sources = extractSources(response);
 
-    // Validação básica
     if (!data || !Array.isArray(data.residuals)) {
-      console.error("Invalid analysis data format:", text);
-      throw new Error("Could not parse analysis data");
+      throw new Error("Não foi possível gerar os gráficos. Tente novamente.");
     }
     
     return {
@@ -174,8 +187,8 @@ export const analyzeSpecificPair = async (assetY: string, assetX: string, period
       ...data
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error analyzing pair:", error);
-    throw new Error("Falha ao gerar análise. Tente novamente.");
+    throw new Error(error.message || "Falha ao gerar análise.");
   }
 };

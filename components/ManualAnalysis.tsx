@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { IBOVESPA_STOCKS, PERIODS } from '../constants';
 import { analyzeSpecificPair } from '../services/geminiService';
 import { DetailedAnalysis } from '../types';
-import { Calculator, Play } from 'lucide-react';
+import { Calculator, Play, AlertCircle } from 'lucide-react';
 
 interface ManualAnalysisProps {
   onAnalyze: (analysis: DetailedAnalysis) => void;
@@ -13,19 +13,21 @@ const ManualAnalysis: React.FC<ManualAnalysisProps> = ({ onAnalyze }) => {
   const [assetX, setAssetX] = useState(IBOVESPA_STOCKS[1].symbol);
   const [period, setPeriod] = useState(PERIODS[2]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     if (assetY === assetX) {
-      alert("Selecione ativos diferentes para Y e X.");
+      setError("Selecione ativos diferentes para Y e X.");
       return;
     }
     setLoading(true);
     try {
       const result = await analyzeSpecificPair(assetY, assetX, period);
       onAnalyze(result);
-    } catch (err) {
-      alert("Falha ao analisar o par. Verifique sua conexão ou tente novamente.");
+    } catch (err: any) {
+      setError(err.message || "Falha ao analisar o par. Verifique sua conexão ou a API Key.");
     } finally {
       setLoading(false);
     }
@@ -37,6 +39,13 @@ const ManualAnalysis: React.FC<ManualAnalysisProps> = ({ onAnalyze }) => {
         <Calculator className="w-5 h-5 text-blue-400" />
         Análise Manual
       </h2>
+
+      {error && (
+        <div className="mb-6 bg-red-500/10 border border-red-500/50 rounded-lg p-4 text-red-200 text-sm flex gap-3 items-center">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <p>{error}</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
