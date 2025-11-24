@@ -19,6 +19,11 @@ export interface ChartPoint {
   mean?: number;
 }
 
+export interface Source {
+  title: string;
+  uri: string;
+}
+
 export interface DetailedAnalysis {
   pair: string;
   residuals: ChartPoint[];
@@ -29,6 +34,7 @@ export interface DetailedAnalysis {
   currentZScore: number;
   lastUpdated: string;
   interpretation: string;
+  sources?: Source[];
 }
 
 export interface ScannedPair {
@@ -38,4 +44,5 @@ export interface ScannedPair {
   adfConfidence: number;
   currentZScore: number;
   halfLife: number;
+  sources?: Source[];
 }

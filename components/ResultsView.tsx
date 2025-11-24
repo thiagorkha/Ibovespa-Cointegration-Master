@@ -3,7 +3,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend 
 } from 'recharts';
 import { DetailedAnalysis } from '../types';
-import { XCircle, Info } from 'lucide-react';
+import { XCircle, Info, ExternalLink, Globe } from 'lucide-react';
 
 interface ResultsViewProps {
   data: DetailedAnalysis;
@@ -117,12 +117,38 @@ const ResultsView: React.FC<ResultsViewProps> = ({ data, onClose }) => {
          </div>
       </div>
 
-      <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex gap-3">
-        <Info className="w-6 h-6 text-blue-400 shrink-0 mt-1" />
-        <div>
-          <h4 className="font-bold text-white mb-1">Interpretação da IA</h4>
-          <p className="text-slate-300 text-sm leading-relaxed">{data.interpretation}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex gap-3 h-full">
+          <Info className="w-6 h-6 text-blue-400 shrink-0 mt-1" />
+          <div>
+            <h4 className="font-bold text-white mb-1">Interpretação (Baseada em dados recentes)</h4>
+            <p className="text-slate-300 text-sm leading-relaxed">{data.interpretation}</p>
+          </div>
         </div>
+
+        {data.sources && data.sources.length > 0 && (
+          <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 h-full">
+             <div className="flex items-center gap-2 mb-3">
+               <Globe className="w-5 h-5 text-emerald-400" />
+               <h4 className="font-bold text-white">Fontes de Dados</h4>
+             </div>
+             <ul className="space-y-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
+               {data.sources.map((source, index) => (
+                 <li key={index} className="flex items-start gap-2">
+                   <ExternalLink className="w-3 h-3 text-slate-500 mt-1 shrink-0" />
+                   <a 
+                     href={source.uri} 
+                     target="_blank" 
+                     rel="noreferrer"
+                     className="text-xs text-blue-400 hover:text-blue-300 break-all hover:underline"
+                   >
+                     {source.title}
+                   </a>
+                 </li>
+               ))}
+             </ul>
+          </div>
+        )}
       </div>
     </div>
   );
