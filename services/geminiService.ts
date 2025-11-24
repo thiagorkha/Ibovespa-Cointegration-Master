@@ -2,7 +2,14 @@ import { GoogleGenAI } from "@google/genai";
 import { DetailedAnalysis, ScannedPair, Source } from "../types";
 
 // Initialize Gemini Client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// IMPORTANT: In Vite/Vercel, we use import.meta.env.VITE_API_KEY
+const apiKey = import.meta.env.VITE_API_KEY;
+
+if (!apiKey) {
+  console.error("API KEY is missing. Please set VITE_API_KEY in your environment variables.");
+}
+
+const ai = new GoogleGenAI({ apiKey: apiKey || '' });
 
 const modelName = "gemini-2.5-flash";
 
