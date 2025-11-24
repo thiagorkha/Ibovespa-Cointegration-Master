@@ -1,25 +1,18 @@
 import { GoogleGenAI } from "@google/genai";
 import { DetailedAnalysis, ScannedPair, Source } from "../types";
 
+// Declare process for TS to avoid "Cannot find name 'process'" error if types are missing
+declare var process: {
+  env: {
+    API_KEY: string;
+  };
+};
+
 // Initialize Gemini Client
-const apiKey = import.meta.env.VITE_API_KEY;
-
-// Instância lazy ou condicional para evitar crash na inicialização se a key for inválida
-let ai: GoogleGenAI | null = null;
-
-if (apiKey) {
-  ai = new GoogleGenAI({ apiKey: apiKey });
-} else {
-  console.warn("VITE_API_KEY não definida. As requisições falharão.");
-}
+// The API key is obtained exclusively from process.env.API_KEY as per guidelines
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const modelName = "gemini-2.5-flash";
-
-const checkApiKey = () => {
-  if (!apiKey || !ai) {
-    throw new Error("API Key não configurada. Verifique as 'Environment Variables' na Vercel (VITE_API_KEY).");
-  }
-};
 
 /**
  * Helper to extract JSON from a potentially Markdown-formatted response.
@@ -63,15 +56,19 @@ const extractSources = (response: any): Source[] => {
 /**
  * Scans the market using Google Search to find real-time cointegration opportunities.
  */
-export const scanMarketForPairs = async (period: string): Promise<ScannedPair[]> => {
-  checkApiKey();
+export const scanMarketForPairs = async (period: string, stocksList?: string): Promise<ScannedPair[]> => {
   const today = new Date().toLocaleDateString('pt-BR');
   
+  // Use passed stocks list or default to a generic instruction if not provided (though scanner calls it with list usually)
+  const stocksContext = stocksList ? `Considere esta lista de ações do IBOVESPA: ${stocksList}` : "Considere as principais ações do IBOVESPA.";
+
   const prompt = `
     Hoje é ${today}. Você é um sistema especialista em Long & Short.
     
+    ${stocksContext}
+    
     FASE 1: COLETA DE DADOS (Yahoo Finance & Investing.com)
-    Pesquise agora as cotações e variações DE HOJE das principais ações do IBOVESPA (Setores: Bancos, Commodities, Varejo, Elétricas).
+    Pesquise agora as cotações e variações DE HOJE das ações listadas acima.
     Priorize fontes como **Yahoo Finance** e **Investing.com**.
     Procure por ativos que tiveram movimentos divergentes hoje (um subiu e o outro caiu, ou um subiu muito mais que o par).
     
@@ -97,8 +94,6 @@ export const scanMarketForPairs = async (period: string): Promise<ScannedPair[]>
   `;
 
   try {
-    if (!ai) throw new Error("Cliente AI não inicializado");
-
     const response = await ai.models.generateContent({
       model: modelName,
       contents: prompt,
@@ -135,7 +130,6 @@ export const scanMarketForPairs = async (period: string): Promise<ScannedPair[]>
  * Generates detailed analysis for a pair using Search to get the latest context.
  */
 export const analyzeSpecificPair = async (assetY: string, assetX: string, period: string): Promise<DetailedAnalysis> => {
-  checkApiKey();
   const today = new Date().toLocaleDateString('pt-BR');
 
   const prompt = `
@@ -161,8 +155,6 @@ export const analyzeSpecificPair = async (assetY: string, assetX: string, period
   `;
 
   try {
-    if (!ai) throw new Error("Cliente AI não inicializado");
-
     const response = await ai.models.generateContent({
       model: modelName,
       contents: prompt,
