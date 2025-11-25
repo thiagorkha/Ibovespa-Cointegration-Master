@@ -1,0 +1,21 @@
+{
+  "name": "Ibovespa Cointegration Master",
+  "short_name": "IbovPair",
+  "description": "Ferramenta de análise quantitativa e cointegração para ações da B3.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%2310b981'><rect width='512' height='512' fill='%230f172a'/><path d='M64 64v384h384' stroke='white' stroke-width='32' fill='none'/><path d='M384 384V192' stroke='%2310b981' stroke-width='32' stroke-linecap='round'/><path d='M256 384V96' stroke='%233b82f6' stroke-width='32' stroke-linecap='round'/><path d='M128 384v-96' stroke='%23facc15' stroke-width='32' stroke-linecap='round'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%2310b981'><rect width='512' height='512' fill='%230f172a'/><path d='M64 64v384h384' stroke='white' stroke-width='32' fill='none'/><path d='M384 384V192' stroke='%2310b981' stroke-width='32' stroke-linecap='round'/><path d='M256 384V96' stroke='%233b82f6' stroke-width='32' stroke-linecap='round'/><path d='M128 384v-96' stroke='%23facc15' stroke-width='32' stroke-linecap='round'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
